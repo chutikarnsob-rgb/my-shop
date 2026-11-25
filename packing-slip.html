@@ -1,0 +1,23 @@
+<!DOCTYPE html><html lang="th"><head><meta charset="utf-8"><title>ใบแพ็คสินค้า + จ่าหน้าพัสดุ</title>
+<style>body{font-family:system-ui,"Noto Sans Thai",sans-serif;margin:0;padding:16px;background:#eee}
+.page{background:#fff;max-width:760px;margin:0 auto 20px;padding:24px;page-break-after:always}
+.slip,.label{border:2px solid #000;padding:16px;margin-bottom:16px}.label{border-style:dashed;font-size:1.15rem}
+table{width:100%;border-collapse:collapse}th,td{border:1px solid #999;padding:6px;text-align:left}
+.big{font-size:1.4rem;font-weight:700}.no{max-width:760px;margin:0 auto 12px}button{padding:10px 16px}
+@media print{body{background:#fff;padding:0}.no{display:none}.page{margin:0;padding:12px;max-width:none}}</style></head><body>
+<div class="no"><button onclick="print()">🖨 พิมพ์ทั้งหมด</button> <a href="index.html">← หน้าร้าน</a> · <a href="pick-list.html">ใบหยิบ</a></div>
+<div id="out">กำลังโหลด...</div>
+<script src="app.js"></script>
+<script>
+Promise.all([getProducts(),getOrders()]).then(([P,O])=>{
+ document.getElementById("out").innerHTML=O.map(o=>{const p=P.find(x=>x.sku===o.sku)||{name:"?",price:0};
+ return `<div class="page">
+ <div class="slip"><h2>ใบแพ็คสินค้า (Packing Slip) — ${o.order_id}</h2><p>วันที่: ${o.timestamp}</p>
+ <table><tr><th>SKU</th><th>สินค้า</th><th>จำนวน</th><th>ราคา/หน่วย</th></tr>
+ <tr><td>${o.sku}</td><td>${p.name}</td><td>${o.qty}</td><td>${money(p.price)}</td></tr></table>
+ <p class="big">ยอดรวม: ${money(o.total||p.price*o.qty)} บาท</p></div>
+ <div class="label"><div><b>จาก:</b> ${SHOP.name}<br>${SHOP.address}<br>โทร ${SHOP.phone}</div><hr>
+ <div class="big">ถึง: ${o.name}</div><div>${o.address}</div><div class="big">โทร: ${o.phone}</div>
+ <div>รหัสออเดอร์: ${o.order_id} | ${o.sku} x ${o.qty}</div></div></div>`}).join("")||"ยังไม่มีออเดอร์";
+}).catch(e=>document.getElementById("out").textContent=e.message);
+</script></body></html>

@@ -1,0 +1,18 @@
+<!DOCTYPE html><html lang="th"><head><meta charset="utf-8"><title>ใบหยิบสินค้า</title>
+<style>body{font-family:system-ui,"Noto Sans Thai",sans-serif;max-width:800px;margin:20px auto;padding:0 16px}
+table{width:100%;border-collapse:collapse}th,td{border:1px solid #999;padding:8px;text-align:left}th{background:#eee}
+img{width:60px;height:60px;object-fit:cover}.r{text-align:right}button{padding:10px 16px;margin-right:8px}
+@media print{.no{display:none}}</style></head><body>
+<div class="no"><button onclick="print()">🖨 พิมพ์</button><a href="index.html">← หน้าร้าน</a> · <a href="packing-slip.html">ใบแพ็ค</a></div>
+<h1>ใบหยิบสินค้า (Pick List)</h1><p id="d"></p>
+<table><thead><tr><th>✓</th><th>รูป</th><th>SKU</th><th>สินค้า</th><th class="r">จำนวนที่ต้องหยิบ</th><th>ออเดอร์</th></tr></thead><tbody id="b"><tr><td colspan="6">กำลังโหลด...</td></tr></tbody></table>
+<script src="app.js"></script>
+<script>
+document.getElementById("d").textContent="วันที่พิมพ์: "+new Date().toLocaleString("th-TH");
+Promise.all([getProducts(),getOrders()]).then(([P,O])=>{
+ O=O.filter(o=>o.status!=="แพ็คแล้ว");const g={};
+ O.forEach(o=>{(g[o.sku]??={qty:0,ids:[]}).qty+=+o.qty;g[o.sku].ids.push(o.order_id)});
+ document.getElementById("b").innerHTML=Object.entries(g).map(([s,v])=>{const p=P.find(x=>x.sku===s)||{name:"?",image:""};
+ return `<tr><td>☐</td><td><img src="${imgSrc(p.image)}"></td><td>${s}</td><td>${p.name}</td><td class="r"><b>${v.qty}</b></td><td>${v.ids.join(", ")}</td></tr>`}).join("")||'<tr><td colspan="6">ยังไม่มีออเดอร์</td></tr>';
+}).catch(e=>document.getElementById("b").innerHTML=`<tr><td colspan="6">${e.message}</td></tr>`);
+</script></body></html>
