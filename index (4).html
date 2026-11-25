@@ -1,0 +1,50 @@
+<!DOCTYPE html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Smile Brush Shop | แปรงสีฟัน</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,"Noto Sans Thai",sans-serif;color:#17332e;background:#f4fbf9}
+header{background:linear-gradient(135deg,#2ea08c,#1f6f8b);color:#fff;padding:56px 20px;text-align:center}
+header h1{margin:0 0 8px;font-size:2.2rem}header p{margin:0;opacity:.9}
+main{max-width:980px;margin:auto;padding:24px 16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px}
+.card{background:#fff;border-radius:16px;box-shadow:0 4px 16px #0001;overflow:hidden}
+.card img{width:100%;aspect-ratio:1;object-fit:cover;background:#dde}
+.card div{padding:16px}.price{font-size:1.4rem;font-weight:700;color:#1f6f8b}
+button{background:#2ea08c;color:#fff;border:0;border-radius:10px;padding:12px 18px;font-size:1rem;cursor:pointer}
+button:hover{background:#238574}
+form{background:#fff;border-radius:16px;padding:20px;margin-top:28px;display:grid;gap:12px;box-shadow:0 4px 16px #0001}
+input,select,textarea{padding:11px;border:1px solid #bcd;border-radius:8px;font:inherit;width:100%}
+#msg{padding:12px;border-radius:8px;display:none}.ok{background:#d9f5e8;display:block!important}.err{background:#fde0e0;display:block!important}
+footer{text-align:center;padding:24px;font-size:.9rem}footer a{color:#1f6f8b}
+</style></head><body>
+<header><h1>🪥 Smile Brush Shop</h1><p>แปรงสีฟันคุณภาพ ส่งไวทั่วไทย</p></header>
+<main>
+<h2>สินค้าของเรา</h2><div class="grid" id="products">กำลังโหลด...</div>
+<form id="f"><h2 id="order">สั่งซื้อ</h2>
+<select id="sku" required></select>
+<input id="qty" type="number" min="1" value="1" required placeholder="จำนวน">
+<input id="name" required placeholder="ชื่อ-นามสกุล">
+<input id="phone" required pattern="[0-9]{9,10}" placeholder="เบอร์โทร">
+<textarea id="address" required rows="3" placeholder="ที่อยู่จัดส่ง"></textarea>
+<div><b>รวม: <span id="total">0</span> บาท</b></div>
+<button>ยืนยันสั่งซื้อ</button><div id="msg"></div></form>
+</main>
+<footer><a href="pick-list.html">ใบหยิบสินค้า</a> · <a href="packing-slip.html">ใบแพ็ค/จ่าหน้าพัสดุ</a></footer>
+<script src="app.js"></script>
+<script>
+let P=[];const $=id=>document.getElementById(id);
+function total(){const p=P.find(x=>x.sku===$("sku").value);$("total").textContent=p?money(p.price*$("qty").value):0}
+getProducts().then(d=>{P=d;
+ $("products").innerHTML=d.map(p=>`<div class="card"><img src="${imgSrc(p.image)}" alt="${p.name}"><div><h3>${p.name}</h3><p>${p.description||""}</p><p class="price">฿${money(p.price)}</p><button onclick="pick('${p.sku}')">สั่งซื้อ</button></div></div>`).join("");
+ $("sku").innerHTML=d.map(p=>`<option value="${p.sku}">${p.name} - ฿${money(p.price)}</option>`).join("");total();
+}).catch(e=>$("products").textContent=e.message);
+function pick(s){$("sku").value=s;total();$("order").scrollIntoView({behavior:"smooth"})}
+$("sku").onchange=$("qty").oninput=total;
+$("f").onsubmit=async e=>{e.preventDefault();const m=$("msg");
+ const o={name:$("name").value,phone:$("phone").value,address:$("address").value,sku:$("sku").value,qty:+$("qty").value};
+ const p=P.find(x=>x.sku===o.sku);
+ try{
+  if(ORDER_API){await fetch(ORDER_API,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain"},body:JSON.stringify(o)});}
+  else{const l=localOrders();l.push({order_id:"LOCAL-"+String(l.length+1).padStart(4,"0"),timestamp:new Date().toLocaleString("th-TH"),...o,total:p.price*o.qty,status:"รอแพ็ค"});localStorage.setItem("orders",JSON.stringify(l));}
+  m.className="ok";m.textContent="✅ สั่งซื้อสำเร็จ ขอบคุณครับ!";$("f").reset();$("sku").value=o.sku;total();
+ }catch(x){m.className="err";m.textContent="ส่งไม่สำเร็จ: "+x.message}};
+</script></body></html>
